@@ -238,9 +238,13 @@
 
             $(widget).trigger("loaded").trigger((tweets.length === 0 ? "empty" : "full"));
           },
-        complete:function(){
-            if (s.refresh_interval) {
-                window.setTimeout(function() { $(widget).trigger("tweet:load"); }, 1000 * s.refresh_interval);
+        complete:function(jqXHR){
+            var refresh = s.refresh_interval;
+            if (jqXHR.getResponseHeader("Retry-After")) {
+                refresh = parseInt(jqXHR.getResponseHeader("Retry-After"));
+            }
+            if (refresh) {
+                window.setTimeout(function() { $(widget).trigger("tweet:load"); }, 1000 * refresh);
             }
         }
       });
