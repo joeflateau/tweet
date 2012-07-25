@@ -220,22 +220,28 @@
       var outro = '<p class="tweet_outro">'+s.outro_text+'</p>';
       var loading = $('<p class="loading">'+s.loading_text+'</p>');
       if (s.loading_text) $(widget).not(":has(.tweet_list)").empty().append(loading);
-      $.getJSON(build_api_url(), function(data){
-        var list = $('<ul class="tweet_list">');
-        var tweets = $.map(data.results || data, extract_template_data);
-        tweets = $.grep(tweets, s.filter).sort(s.comparator).slice(0, s.count);
-        list.append($.map(tweets, function(o) { return "<li>" + t(s.template, o) + "</li>"; }).join('')).
-          children('li:first').addClass('tweet_first').end().
-          children('li:odd').addClass('tweet_even').end().
-          children('li:even').addClass('tweet_odd');
+      $.ajax({
+        url:build_api_url(),
+        dataType:'jsonp',
+        success: function(data){
+            var list = $('<ul class="tweet_list">');
+            var tweets = $.map(data.results || data, extract_template_data);
+            tweets = $.grep(tweets, s.filter).sort(s.comparator).slice(0, s.count);
+            list.append($.map(tweets, function(o) { return "<li>" + t(s.template, o) + "</li>"; }).join('')).
+              children('li:first').addClass('tweet_first').end().
+              children('li:odd').addClass('tweet_even').end().
+              children('li:even').addClass('tweet_odd');
 
-        $(widget).empty().append(list);
-        if (s.intro_text) list.before(intro);
-        if (s.outro_text) list.after(outro);
+            $(widget).empty().append(list);
+            if (s.intro_text) list.before(intro);
+            if (s.outro_text) list.after(outro);
 
-        $(widget).trigger("loaded").trigger((tweets.length === 0 ? "empty" : "full"));
-        if (s.refresh_interval) {
-          window.setTimeout(function() { $(widget).trigger("tweet:load"); }, 1000 * s.refresh_interval);
+            $(widget).trigger("loaded").trigger((tweets.length === 0 ? "empty" : "full"));
+          },
+        complete:function(){
+            if (s.refresh_interval) {
+                window.setTimeout(function() { $(widget).trigger("tweet:load"); }, 1000 * s.refresh_interval);
+            }
         }
       });
     }
