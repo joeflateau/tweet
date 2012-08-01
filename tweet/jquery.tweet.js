@@ -220,6 +220,13 @@
       var outro = '<p class="tweet_outro">'+s.outro_text+'</p>';
       var loading = $('<p class="loading">'+s.loading_text+'</p>');
       if (s.loading_text) $(widget).not(":has(.tweet_list)").empty().append(loading);
+      var forceRefreshTimeout;
+      var refresh = s.refresh_interval;
+
+      if (refresh) { 
+          forceRefreshTimeout = setTimeout(function(){ $(widget).trigger("tweet:load"); }, 2000 * s.refresh_interval);
+      }
+
       $.ajax({
         url:build_api_url(),
         dataType:'jsonp',
@@ -239,10 +246,11 @@
             $(widget).trigger("loaded").trigger((tweets.length === 0 ? "empty" : "full"));
           },
         complete:function(jqXHR){
-            var refresh = s.refresh_interval;
+            window.clearTimeout(forceRefreshTimeout);
             if (jqXHR.getResponseHeader("Retry-After")) {
-                refresh = parseInt(jqXHR.getResponseHeader("Retry-After"));
+                refresh = parseInt(jqXHR.getResponseHeader("Retry-After")) || refresh;
             }
+
             if (refresh) {
                 window.setTimeout(function() { $(widget).trigger("tweet:load"); }, 1000 * refresh);
             }
